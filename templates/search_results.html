@@ -72,7 +72,7 @@
                             <p class="card-text">
                                 <small class="book-meta">Course: {{ book.course_code }}</small><br>
                                 <small class="book-meta">Subject: {{ book.subject }}</small><br>
-                                <span class="badge bg-primary">{{ book.condition }}</span>
+                                <span class="badge badge-reviews" data-condition="{{ book.condition }}">{{ book.condition }}</span>
                             </p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="book-date">Posted {{ book.date_posted }}</span>

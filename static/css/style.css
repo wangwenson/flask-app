@@ -152,18 +152,19 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Badge Styles */
 .badge-rating {
-    background-color: #8C2F39;
+    background-color: #1E555C;
+    color: #D1BFA7;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 0.25rem;
 }
 
 .badge-reviews {
+    background-color: #3A2E39;
     color: #D1BFA7;
-    padding: 0.5em 1em;
-    border-radius: 20px;
-    font-weight: 500;
-    text-transform: uppercase;
-    font-size: 0.8em;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 0.25rem;
 }
 
 .badge-reviews[data-condition="New"] {
@@ -198,11 +199,13 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Stats Styles */
 .stats-number {
-    color: #1E555C;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
 }
 
 .stats-label {
-    color: #3A2E39;
+    font-size: 0.9rem;
 }
 
 /* Book List Styles */
@@ -1205,4 +1208,37 @@ h1, h2, h3, h4, h5, h6 {
     align-items: center;
     justify-content: center;
     margin-left: 0.5rem;
+}
+
+/* Profile Page Styles moved from inline profile.html */
+.profile-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+}
+
+.badge-rating {
+    background-color: #1E555C;
+    color: #D1BFA7;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 0.25rem;
+}
+
+.badge-reviews {
+    background-color: #3A2E39;
+    color: #D1BFA7;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 0.25rem;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stats-label {
+    font-size: 0.9rem;
 } 

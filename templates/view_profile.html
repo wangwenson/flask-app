@@ -6,14 +6,17 @@
         <div class="col-md-4">
             <div class="card profile-view-card">
                 <div class="card-body text-center">
-                    {% if user.profile_image %}
-                        <img src="{{ url_for('static', filename='profile_images/' + user.profile_image) }}" 
-                             class="profile-image-large rounded-circle mb-3" alt="Profile Image">
-                    {% else %}
-                        <div class="default-avatar rounded-circle mb-3 mx-auto">
-                            <span>{{ user.name[0].upper() }}</span>
+                    <div class="mb-3">
+                        {% if user.profile_image %}
+                        <img src="{{ user.profile_image }}" 
+                            class="rounded-circle border profile-image" 
+                            alt="Profile picture">
+                        {% else %}
+                        <div class="default-avatar rounded-circle border d-flex align-items-center justify-content-center mx-auto">
+                            <span>{{ user.name[0]|upper }}</span>
                         </div>
-                    {% endif %}
+                        {% endif %}
+                    </div>
                     <h3 class="card-title">{{ user.name }}</h3>
                     <p class="text-muted">{{ user.location }}</p>
                     <div class="mb-3">

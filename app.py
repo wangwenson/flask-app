@@ -46,7 +46,7 @@ def get_recent_books(limit=3):
     conn.close()
     return books
 
-def get_top_users(limit=4):
+def get_top_users(limit=3):
     '''
     Get the top users from the database
     limit: number of users to return
@@ -132,6 +132,10 @@ def index():
 @app.route('/home')
 @login_required
 def home():
+    '''
+    Display the home page
+    Grabs listing of 3 most recent books and top 3 users
+    '''
     recent_books = get_recent_books(3)  # Get 3 most recent books
     top_users = get_top_users()
     return render_template('home.html', recent_books=recent_books, top_users=top_users)
@@ -139,6 +143,10 @@ def home():
 @app.route('/browse')
 @login_required
 def browse_books():
+    '''
+    Display the browse books page
+    Grabs listing of all available books
+    '''
     page = request.args.get('page', 1, type=int)
     per_page = 12  # Number of books per page
     
@@ -175,6 +183,10 @@ def browse_books():
 @app.route('/my-books')
 @login_required
 def my_books():
+    '''
+    Display the my books page
+    Grabs listing of books owned by the user and books borrowed by the user
+    '''
     conn = get_db_connection()
     
     books_lending = conn.execute('''
@@ -211,9 +223,14 @@ def my_books():
 @app.route('/messages')
 @login_required
 def messages():
+    '''
+    Display the messages page
+    Grabs listing of all users the current user has conversations with
+    Functions as a chat interface
+    '''
     conn = get_db_connection()
     
-    # Get all users the current user has had conversations with
+    # Get all users the current user has conversations with
     chats = conn.execute('''
         SELECT DISTINCT u.user_id, u.name, u.profile_image,
                (SELECT m.message_id 
@@ -305,6 +322,9 @@ def messages():
 @app.route('/send_message', methods=['POST'])
 @login_required
 def send_message():
+    '''
+    Send a message to a user
+    '''
     if request.method == 'POST':
         recipient_id = request.form.get('recipient_id')
         content = request.form.get('content')
@@ -341,31 +361,6 @@ def send_message():
         conn.close()
         
         return redirect(url_for('messages', message_id=message['message_id']))
-
-@app.route('/search_users')
-@login_required
-def search_users():
-    query = request.args.get('q', '').strip()
-    if not query:
-        return jsonify([])
-        
-    conn = get_db_connection()
-    users = conn.execute('''
-        SELECT user_id, name, email, location, profile_image
-        FROM Users 
-        WHERE user_id != ? AND (name LIKE ? OR email LIKE ?)
-        ORDER BY name
-        LIMIT 10
-    ''', (session['user_id'], f'%{query}%', f'%{query}%')).fetchall()
-    conn.close()
-    
-    return jsonify([{
-        'id': user['user_id'],
-        'name': user['name'],
-        'email': user['email'],
-        'location': user['location'],
-        'profile_image': user['profile_image'] or url_for('static', filename='images/default-avatar.png')
-    } for user in users])
 
 @app.route('/profile')
 @login_required
@@ -589,33 +584,33 @@ def search():
 @app.route('/add_book', methods=['GET', 'POST'])
 @login_required
 def add_book():
+    '''
+    Display the add book page
+    '''
+    conn = get_db_connection()
     if request.method == 'POST':
         title = request.form.get('title')
         author = request.form.get('author')
         isbn = request.form.get('isbn')
-        edition = request.form.get('edition')
         course_code = request.form.get('course_code')
         subject = request.form.get('subject')
         condition = request.form.get('condition')
-        description = request.form.get('description')
         
         if not all([title, author, isbn, course_code, subject, condition]):
             flash('Please fill in all required fields', 'danger')
+            conn.close()
             return redirect(url_for('add_book'))
         
         try:
-            cursor = get_db_connection().cursor()
-            cursor.execute('''
-                INSERT INTO Books (user_id, title, author, isbn, edition, course_code, 
-                                 subject, condition, description, date_posted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-            ''', (session['user_id'], title, author, isbn, edition, course_code, 
-                  subject, condition, description))
-            get_db_connection().commit()
-            
-            flash('Book added successfully!', 'success')
+            conn.execute('''
+                INSERT INTO Books (user_id, title, author, isbn, course_code, subject, condition, availability, date_posted)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            ''', (session['user_id'], title, author, isbn, course_code, subject, condition, 'available'))
+            conn.commit()
+            flash('Book updated successfully!', 'success')
+            conn.close()
             return redirect(url_for('my_books'))
-            
+        
         except Exception as e:
             flash('An error occurred while adding the book. Please try again.', 'danger')
             return redirect(url_for('add_book'))
