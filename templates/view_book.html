@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} - Campus BookShare{% endblock %}
+
+{% block content %}
+<div class="container book-view-container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card book-view-card mb-4">
+                <div class="card-body">
+                    <h2 class="book-title mb-3">{{ book.title }}</h2>
+                    <h4 class="book-subtitle mb-4">by {{ book.author }}</h4>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p class="book-meta"><strong>ISBN:</strong> {{ book.isbn }}</p>
+                            <p class="book-meta"><strong>Course Code:</strong> {{ book.course_code }}</p>
+                            <p class="book-meta"><strong>Subject:</strong> {{ book.subject }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="book-meta"><strong>Condition:</strong> 
+                                <span class="badge badge-reviews" data-condition="{{ book.condition }}">{{ book.condition }}</span>
+                            </p>
+                            <p class="book-meta"><strong>Posted:</strong> {{ book.date_posted }}</p>
+                            <p class="book-meta"><strong>Owner:</strong> {{ book.owner_name }}</p>
+                        </div>
+                    </div>
+
+                    <div class="availability-status mb-4">
+                        {% if borrowing %}
+                            <div class="alert alert-warning">
+                                <h5 class="alert-heading">Currently Borrowed</h5>
+                                <p class="mb-0">
+                                    <i class="fas fa-user-clock me-2"></i>Borrowed by: {{ borrowing.borrower_name }}<br>
+                                    <i class="fas fa-calendar-check me-2"></i>Expected return: {{ borrowing.expected_return_date }}
+                                </p>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success">
+                                <h5 class="alert-heading">Available for Borrowing</h5>
+                                <p class="mb-0">
+                                    <i class="fas fa-check-circle me-2"></i>This book is currently available for borrowing.
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        {% if book.user_id != session['user_id'] %}
+                            {% if book.availability == 'available' %}
+                            <form action="{{ url_for('borrow_book', book_id=book.book_id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-primary btn-px-4">
+                                    <i class="fas fa-book me-1"></i> Request to Borrow
+                                </button>
+                            </form>
+                            {% elif book.availability == 'pending' %}
+                            <button class="btn btn-secondary btn-px-4" disabled>
+                                <i class="fas fa-clock me-1"></i> Request Pending
+                            </button>
+                            {% elif book.availability == 'borrowed' %}
+                            <button class="btn btn-secondary btn-px-4" disabled>
+                                <i class="fas fa-ban me-1"></i> Currently Borrowed
+                            </button>
+                            {% endif %}
+                        {% endif %}
+                        <a href="{{ url_for('home') }}" class="btn btn-primary btn-px-4">
+                            <i class="fas fa-arrow-left me-1"></i> Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card owner-card">
+                <div class="card-body">
+                    <h4 class="mb-3">About the Owner</h4>
+                    <div class="text-center mb-3">
+                        {% if book.profile_image %}
+                            <img src="{{ book.profile_image }}" 
+                                 class="profile-image-medium rounded-circle mb-3" alt="Profile Image">
+                        {% else %}
+                            <div class="default-avatar rounded-circle mb-3 mx-auto">
+                                <span>{{ book.owner_name[0].upper() }}</span>
+                            </div>
+                        {% endif %}
+                        <h5 class="owner-name">{{ book.owner_name }}</h5>
+                        <p class="owner-location">{{ book.location }}</p>
+                        <div class="mb-3">
+                            <span class="owner-rating">{{ "%.1f"|format(book.rating) if book.rating else 0 }} ★</span>
+                            <small class="text-muted">({{ book.review_count }} reviews)</small>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-center owner-actions">
+                            <a href="{{ url_for('view_profile', user_id=book.owner_id) }}" class="btn btn-primary btn-px-4">View Profile</a>
+                            {% if book.user_id != session['user_id'] %}
+                                <a href="{{ url_for('messages', message_id=0, user_id=book.owner_id) }}" 
+                                   class="btn btn-primary btn-px-4">
+                                    <i class="fas fa-envelope me-1"></i> Message
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

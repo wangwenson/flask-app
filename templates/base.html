@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Campus BookShare{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}?v=1.1" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -27,6 +27,9 @@
                     {% if session.get('user_id') %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('my_books') }}">My Books</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('my_reviews') }}">My Reviews</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('messages') }}">Messages</a>

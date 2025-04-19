@@ -3,15 +3,115 @@
 {% block title %}Profile - Campus BookShare{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1 class="mb-4">My Profile</h1>
+<div class="container py-4 content">
     <div class="row">
-        <div class="col-md-4">
-            <!-- Profile information will go here -->
+        <!-- Profile Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        {% if user.profile_image %}
+                        <img src="{{ user.profile_image }}" 
+                             class="rounded-circle border profile-image" 
+                             alt="Profile picture">
+                        {% else %}
+                        <div class="default-avatar rounded-circle border d-flex align-items-center justify-content-center mx-auto">
+                            <span>{{ user.name[0]|upper }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <h3>{{ user.name }}</h3>
+                    <p class="text-muted">{{ user.location }}</p>
+                    <div class="d-flex justify-content-center gap-2 mb-3">
+                        <span class="badge badge-rating">{{ user.rating|round(1) }} ★</span>
+                        <span class="badge badge-reviews">{{ user.review_count }} Reviews</span>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('edit_profile') }}" class="btn btn-outline-primary">Edit Profile</a>
+                        <a href="{{ url_for('my_books') }}" class="btn btn-outline-primary">My Books</a>
+                        <a href="{{ url_for('my_reviews') }}" class="btn btn-outline-primary">My Reviews</a>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- User Stats and Recent Books -->
         <div class="col-md-8">
-            <!-- Profile activity and settings will go here -->
+            <!-- Stats Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Activity Overview</h4>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h5 class="stats-number">{{ user.total_books }}</h5>
+                            <small class="stats-label">Books Listed</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="stats-number">{{ user.review_count }}</h5>
+                            <small class="stats-label">Reviews</small>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="stats-number">{{ user.rating|round(1) }}</h5>
+                            <small class="stats-label">Average Rating</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Books -->
+            <div class="card">
+                <div class="card-body">
+                    <h4>Recent Listings</h4>
+                    {% if recent_books %}
+                    <div class="list-group profile-recent-listings">
+                        {% for book in recent_books %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="book-title">{{ book.title }}</h6>
+                                    <small class="book-date">Posted {{ book.date_posted }}</small>
+                                </div>
+                                <span class="badge badge-reviews">{{ book.condition }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No books listed yet.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+.badge-rating {
+    background-color: #1E555C;
+    color: #D1BFA7;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 0.25rem;
+}
+
+.badge-reviews {
+    background-color: #3A2E39;
+    color: #D1BFA7;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 0.25rem;
+}
+
+.stats-number {
+    color: #1E555C;
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stats-label {
+    color: #3A2E39;
+    font-size: 0.9rem;
+}
+</style>
 {% endblock %} 

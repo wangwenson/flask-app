@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Book - Campus BookShare{% endblock %}
+
+{% block content %}
+<div class="container py-4 content">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="mb-4">Add New Book</h2>
+                    
+                    <form method="POST" action="{{ url_for('add_book') }}">
+                        <!-- Book Information -->
+                        <div class="mb-4">
+                            <h4>Book Information</h4>
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Title</label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="author" class="form-label">Author</label>
+                                <input type="text" class="form-control" id="author" name="author" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="isbn" class="form-label">ISBN</label>
+                                <input type="text" class="form-control" id="isbn" name="isbn" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edition" class="form-label">Edition</label>
+                                <input type="text" class="form-control" id="edition" name="edition">
+                            </div>
+                        </div>
+
+                        <!-- Course Information -->
+                        <div class="mb-4">
+                            <h4>Course Information</h4>
+                            <div class="mb-3">
+                                <label for="course_code" class="form-label">Course Code</label>
+                                <input type="text" class="form-control" id="course_code" name="course_code" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject</label>
+                                <select class="form-select" id="subject" name="subject" required>
+                                    <option value="">Select a subject</option>
+                                    <option value="Computer Science">Computer Science</option>
+                                    <option value="Mathematics">Mathematics</option>
+                                    <option value="Physics">Physics</option>
+                                    <option value="Chemistry">Chemistry</option>
+                                    <option value="Biology">Biology</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Business">Business</option>
+                                    <option value="Humanities">Humanities</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Book Condition -->
+                        <div class="mb-4">
+                            <h4>Book Condition</h4>
+                            <div class="mb-3">
+                                <label for="condition" class="form-label">Condition</label>
+                                <select class="form-select" id="condition" name="condition" required>
+                                    <option value="">Select condition</option>
+                                    <option value="New">New</option>
+                                    <option value="Like New">Like New</option>
+                                    <option value="Very Good">Very Good</option>
+                                    <option value="Good">Good</option>
+                                    <option value="Fair">Fair</option>
+                                    <option value="Poor">Poor</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Additional Notes</label>
+                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('my_books') }}" class="btn btn-outline-primary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Add Book</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

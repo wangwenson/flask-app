@@ -1,19 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Campus BookShare{% endblock %}
+{% block title %}Search Results - Campus BookShare{% endblock %}
 
 {% block content %}
 <div class="container py-4 content">
-    <!-- Welcome Section -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <h1 class="display-4 welcome-title">Welcome to Campus BookShare</h1>
-            <p class="lead welcome-lead">Find and share textbooks with your fellow students</p>
-        </div>
-    </div>
-
-    <!-- Search Section -->
-    <div class="row mb-5">
+    <!-- Search Form -->
+    <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
@@ -55,12 +47,23 @@
         </div>
     </div>
 
-    <!-- Recent Listings Section -->
-    <div class="row mb-5">
+    <!-- Search Results -->
+    <div class="row">
         <div class="col-12">
-            <h2 class="mb-4 section-title">Recent Book Listings</h2>
+            <h2 class="section-title mb-4">
+                Search Results
+                {% if query or course_code or subject %}
+                <small class="text-muted">
+                    {% if query %}for "{{ query }}"{% endif %}
+                    {% if course_code %}in {{ course_code }}{% endif %}
+                    {% if subject %}in {{ subject }}{% endif %}
+                </small>
+                {% endif %}
+            </h2>
+
+            {% if books %}
             <div class="row">
-                {% for book in recent_books %}
+                {% for book in books %}
                 <div class="col-md-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body">
@@ -68,7 +71,8 @@
                             <h6 class="card-subtitle mb-2 book-subtitle">by {{ book.author }}</h6>
                             <p class="card-text">
                                 <small class="book-meta">Course: {{ book.course_code }}</small><br>
-                                <span class="badge badge-reviews" data-condition="{{ book.condition }}">{{ book.condition }}</span>
+                                <small class="book-meta">Subject: {{ book.subject }}</small><br>
+                                <span class="badge bg-primary">{{ book.condition }}</span>
                             </p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="book-date">Posted {{ book.date_posted }}</span>
@@ -79,32 +83,57 @@
                 </div>
                 {% endfor %}
             </div>
-        </div>
-    </div>
 
-    <!-- Top Rated Users Section -->
-    <div class="row">
-        <div class="col-12">
-            <h2 class="mb-4 section-title">Top Rated Users</h2>
-            <div class="row">
-                {% for user in top_users %}
-                <div class="col-md-4">
-                    <div class="user-card card mb-4">
-                        <div class="card-body text-center">
-                            <img src="{{ user.profile_image }}" 
-                                 class="profile-image rounded-circle mb-3" alt="Profile Image">
-                            <h5 class="card-title">{{ user.name }}</h5>
-                            <p class="text-muted">{{ user.location }}</p>
-                            <div class="mb-3">
-                                <span class="badge bg-primary">{{ "%.1f"|format(user.avg_rating) }} ★</span>
-                                <small class="text-muted">({{ user.review_count }} reviews)</small>
-                            </div>
-                            <a href="{{ url_for('view_profile', user_id=user.user_id) }}" class="btn btn-outline-primary">View Profile</a>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+            <!-- Pagination -->
+            {% if pagination %}
+            <nav aria-label="Search results pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('search', page=pagination.prev_num, query=query, course_code=course_code, subject=subject) }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    {% endif %}
+
+                    {% for page in pagination.iter_pages() %}
+                        {% if page %}
+                            {% if page != pagination.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('search', page=page, query=query, course_code=course_code, subject=subject) }}">{{ page }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('search', page=pagination.next_num, query=query, course_code=course_code, subject=subject) }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="alert alert-info">
+                No books found matching your search criteria.
             </div>
+            {% endif %}
         </div>
     </div>
 </div>

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}New Message - Campus BookShare{% endblock %}
+
+{% block content %}
+<div class="container new-message-container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card new-message-card">
+                <div class="card-header">
+                    <h4 class="mb-0">New Message</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('send_message') }}">
+                        <div class="mb-3">
+                            <label for="recipient" class="form-label">To:</label>
+                            {% if recipient %}
+                                <input type="text" class="form-control" id="recipient" name="recipient" 
+                                       value="{{ recipient.name }}" readonly>
+                                <input type="hidden" name="recipient_id" value="{{ recipient.user_id }}">
+                            {% else %}
+                                <input type="text" class="form-control" id="recipient" name="recipient" 
+                                       placeholder="Search for a user..." required>
+                                <input type="hidden" name="recipient_id" id="recipient_id">
+                                <div id="search-results" class="list-group mt-2" style="display: none;"></div>
+                            {% endif %}
+                        </div>
+                        {% if book %}
+                        <div class="mb-3">
+                            <label class="form-label">About Book:</label>
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ book.title }}</h5>
+                                    <p class="card-text">{{ book.description }}</p>
+                                </div>
+                            </div>
+                            <input type="hidden" name="book_id" value="{{ book.book_id }}">
+                        </div>
+                        {% endif %}
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Message:</label>
+                            <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-outline-primary">Send Message</button>
+                            <a href="{{ url_for('messages') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not recipient %}
+<script>
+document.getElementById('recipient').addEventListener('input', function(e) {
+    const searchTerm = e.target.value;
+    if (searchTerm.length < 2) {
+        document.getElementById('search-results').style.display = 'none';
+        return;
+    }
+
+    fetch(`/search_users?q=${encodeURIComponent(searchTerm)}`)
+        .then(response => response.json())
+        .then(users => {
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '';
+            
+            if (users.length === 0) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+
+            users.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'list-group-item list-group-item-action';
+                userDiv.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <img src="${user.profile_image || '/static/images/default-profile.png'}" 
+                             class="rounded-circle me-2" width="32" height="32">
+                        <div>${user.name}</div>
+                    </div>
+                `;
+                userDiv.addEventListener('click', () => {
+                    document.getElementById('recipient').value = user.name;
+                    document.getElementById('recipient_id').value = user.id;
+                    resultsDiv.style.display = 'none';
+                });
+                resultsDiv.appendChild(userDiv);
+            });
+            
+            resultsDiv.style.display = 'block';
+        });
+});
+</script>
+{% endif %}
+{% endblock %} 

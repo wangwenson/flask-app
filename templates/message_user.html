@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Message {{ user.name }} - Campus BookShare{% endblock %}
+
+{% block content %}
+<div class="container py-4 content">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="mb-4">Message {{ user.name }}</h2>
+                    
+                    <form method="POST" action="{{ url_for('message_user', user_id=user_id) }}">
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Your Message</label>
+                            <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Send Message</button>
+                            {% if request.args.get('book_id') %}
+                                <a href="{{ url_for('view_book', book_id=request.args.get('book_id')) }}" class="btn btn-outline-secondary">Cancel</a>
+                            {% else %}
+                                <a href="{{ url_for('messages') }}" class="btn btn-outline-secondary">Cancel</a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
