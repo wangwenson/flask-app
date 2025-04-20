@@ -88,6 +88,7 @@ def search_books(query=None, course_code=None, subject=None, page=1, per_page=9)
     conditions = []
     params = []
     
+    # Set condition based on user search query
     if query:
         conditions.append('''
             (b.title LIKE ? OR 
@@ -97,20 +98,24 @@ def search_books(query=None, course_code=None, subject=None, page=1, per_page=9)
         search_term = f'%{query}%'
         params.extend([search_term, search_term, search_term])
     
+    # Set condition based on course code
     if course_code:
         conditions.append('b.course_code = ?')
         params.append(course_code)
     
+    # Set condition based on subject
     if subject:
         conditions.append('b.subject = ?')
         params.append(subject)
     
+    # If there are conditions, add them to the base query
     if conditions:
         base_query += ' AND ' + ' AND '.join(conditions)
     
     count_query = f'SELECT COUNT(*) as total FROM ({base_query})'
     total_count = conn.execute(count_query, params).fetchone()['total']
     
+    # Add pagination to the base query
     base_query += ' ORDER BY b.date_posted DESC LIMIT ? OFFSET ?'
     params.extend([per_page, (page - 1) * per_page])
     
@@ -136,8 +141,8 @@ def home():
     Display the home page
     Grabs listing of 3 most recent books and top 3 users
     '''
-    recent_books = get_recent_books(3)  # Get 3 most recent books
-    top_users = get_top_users()
+    recent_books = get_recent_books(3)  # Get 3 most recent listed books
+    top_users = get_top_users() # Get top 3 rated users
     return render_template('home.html', recent_books=recent_books, top_users=top_users)
 
 @app.route('/browse')
@@ -189,12 +194,14 @@ def my_books():
     '''
     conn = get_db_connection()
     
+    # Get books owned by the user
     books_lending = conn.execute('''
         SELECT * FROM Books 
         WHERE user_id = ? 
         ORDER BY date_posted DESC
     ''', (session['user_id'],)).fetchall()
     
+    # Get books borrowed by the user
     books_borrowing = conn.execute('''
         SELECT b.*, u.name as lender_name, u.user_id as lender_id
         FROM Books b
@@ -323,7 +330,8 @@ def messages():
 @login_required
 def send_message():
     '''
-    Send a message to a user
+    Handles message sending in the chat interface
+    Sends a message to a user
     '''
     if request.method == 'POST':
         recipient_id = request.form.get('recipient_id')
@@ -362,6 +370,7 @@ def send_message():
         
         return redirect(url_for('messages', message_id=message['message_id']))
 
+
 @app.route('/profile')
 @login_required
 def profile():
@@ -389,6 +398,7 @@ def profile():
     user = dict(user)
     user['total_books'] = total_books['count']
     
+    # Get recent books listed by the user
     recent_books = conn.execute('''
         SELECT * FROM Books 
         WHERE user_id = ? 
@@ -402,6 +412,12 @@ def profile():
 @app.route('/edit-profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
+    '''
+    Display the edit profile page
+    Allows user to edit their profile information
+    Handles profile image upload
+    Handles password changes
+    '''
     if request.method == 'POST':
         name = request.form.get('name')
         location = request.form.get('location')
@@ -414,21 +430,25 @@ def edit_profile():
         conn = get_db_connection()
         user = conn.execute('SELECT * FROM Users WHERE user_id = ?', (session['user_id'],)).fetchone()
         
+        # Check if current password is correct
         if new_password:
             if not check_password_hash(user['password'], current_password):
                 flash('Current password is incorrect.', 'danger')
                 conn.close()
                 return redirect(url_for('edit_profile'))
             
+            # Check if new password and confirm password match
             if new_password != confirm_password:
                 flash('New passwords do not match.', 'danger')
                 conn.close()
                 return redirect(url_for('edit_profile'))
             
+            # Hash new password
             hashed_password = generate_password_hash(new_password)
             conn.execute('UPDATE Users SET password = ? WHERE user_id = ?', 
                         (hashed_password, session['user_id']))
         
+        # Check if email is already taken
         if email != user['email']:
             existing_user = conn.execute('SELECT * FROM Users WHERE email = ? AND user_id != ?', 
                                        (email, session['user_id'])).fetchone()
@@ -482,6 +502,10 @@ def edit_profile():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    '''
+    Display the register page
+    Handles user registration
+    '''
     if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
@@ -495,6 +519,7 @@ def register():
         
         conn = get_db_connection()
         
+        # Check if email is already registered
         existing_user = conn.execute('SELECT * FROM Users WHERE email = ?', (email,)).fetchone()
         if existing_user:
             flash('Email already registered.', 'danger')
@@ -518,6 +543,10 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    '''
+    Display the login page
+    Handles user login
+    '''
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -531,7 +560,7 @@ def login():
             session['user_id'] = user['user_id']
             session['name'] = user['name']
             if remember:
-                session.permanent = True
+                session.permanent = True # Remember user's session
             flash('Login successful!', 'success')
             return redirect(url_for('home'))
         else:
@@ -541,6 +570,9 @@ def login():
 
 @app.route('/logout')
 def logout():
+    '''
+    Log out the user
+    '''
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
@@ -548,11 +580,16 @@ def logout():
 @app.route('/search')
 @login_required
 def search():
+    '''
+    Search for books based on query, course code, and subject
+    '''
+    # Get search parameters from page
     query = request.args.get('query', '').strip()
     course_code = request.args.get('course_code', '').strip()
     subject = request.args.get('subject', '').strip()
     page = request.args.get('page', 1, type=int)
     
+    # Search for books based on parameters
     books, total_count = search_books(
         query=query if query else None,
         course_code=course_code if course_code else None,
@@ -586,6 +623,7 @@ def search():
 def add_book():
     '''
     Display the add book page
+    Allows user to add a new book to their listings
     '''
     conn = get_db_connection()
     if request.method == 'POST':
@@ -596,12 +634,14 @@ def add_book():
         subject = request.form.get('subject')
         condition = request.form.get('condition')
         
+        # Check if all required fields are filled
         if not all([title, author, isbn, course_code, subject, condition]):
             flash('Please fill in all required fields', 'danger')
             conn.close()
             return redirect(url_for('add_book'))
         
         try:
+            # Insert the new book into the database
             conn.execute('''
                 INSERT INTO Books (user_id, title, author, isbn, course_code, subject, condition, availability, date_posted)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
@@ -620,6 +660,10 @@ def add_book():
 @app.route('/edit_book/<int:book_id>', methods=['GET', 'POST'])
 @login_required
 def edit_book(book_id):
+    '''
+    Display the edit book page
+    Allows user to edit their book listings
+    '''
     conn = get_db_connection()
     
     book = conn.execute('''
@@ -632,6 +676,7 @@ def edit_book(book_id):
         conn.close()
         return redirect(url_for('my_books'))
     
+    # Handle book edit submission
     if request.method == 'POST':
         title = request.form.get('title')
         author = request.form.get('author')
@@ -646,6 +691,7 @@ def edit_book(book_id):
             return redirect(url_for('edit_book', book_id=book_id))
         
         try:
+            # Update the book in the database
             conn.execute('''
                 UPDATE Books 
                 SET title = ?, author = ?, isbn = ?, 
@@ -670,6 +716,9 @@ def edit_book(book_id):
 @app.route('/delete_book/<int:book_id>', methods=['POST'])
 @login_required
 def delete_book(book_id):
+    '''
+    Delete a book from the user's listings
+    '''
     conn = get_db_connection()
     
     try:
@@ -719,6 +768,10 @@ def delete_book(book_id):
 @app.route('/view_profile/<int:user_id>')
 @login_required
 def view_profile(user_id):
+    '''
+    Display the user's profile page
+    Shows recent listings and average rating
+    '''
     try:
         # Get the user's details
         user = get_db_connection().execute(
@@ -752,6 +805,7 @@ def view_profile(user_id):
             (user_id,)
         ).fetchone()
 
+        # Calculate average rating and review count
         avg_rating = rating_result['avg_rating'] if rating_result['avg_rating'] else 0
         review_count = rating_result['review_count'] if rating_result['review_count'] else 0
 
@@ -767,6 +821,10 @@ def view_profile(user_id):
 @app.route('/add_review/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 def add_review(user_id):
+    '''
+    Display the add review page
+    Allows user to add a new review for another user
+    '''
     if request.method == 'POST':
         rating = request.form.get('rating')
         comment = request.form.get('comment')
@@ -776,6 +834,7 @@ def add_review(user_id):
             return redirect(url_for('add_review', user_id=user_id))
         
         try:
+            # Insert the new review into the database
             conn = get_db_connection()
             conn.execute('''
                 INSERT INTO Reviews (user_id, reviewer_id, rating, comment, timestamp)
@@ -801,6 +860,10 @@ def add_review(user_id):
 @app.route('/my_reviews')
 @login_required
 def my_reviews():
+    '''
+    Display the user's reviews
+    Shows received and given reviews
+    '''
     conn = get_db_connection()
 
     received_reviews = conn.execute('''
@@ -828,6 +891,10 @@ def my_reviews():
 @app.route('/edit_review/<int:review_id>', methods=['GET', 'POST'])
 @login_required
 def edit_review(review_id):
+    '''
+    Display the edit review page
+    Allows user to edit their reviews
+    '''
     conn = get_db_connection()
     review = conn.execute('''
         SELECT r.*, u.name as reviewee_name
@@ -873,6 +940,9 @@ def edit_review(review_id):
 @app.route('/delete_review/<int:review_id>', methods=['POST'])
 @login_required
 def delete_review(review_id):
+    '''
+    Delete a review from the user's reviews
+    '''
     conn = get_db_connection()
     
     try:
@@ -903,6 +973,10 @@ def delete_review(review_id):
 @app.route('/book/<int:book_id>')
 @login_required
 def view_book(book_id):
+    '''
+    Display the book details page
+    Shows book details, owner information, ratings, and borrowing status
+    '''
     try:
         conn = get_db_connection()
         
@@ -944,6 +1018,10 @@ def view_book(book_id):
 @app.route('/borrow_book/<int:book_id>', methods=['POST'])
 @login_required
 def borrow_book(book_id):
+    '''
+    Handle the borrow request process
+    Automatically sends a message to the book owner
+    '''
     try:
         conn = get_db_connection()
         
@@ -1003,6 +1081,10 @@ def borrow_book(book_id):
 @app.route('/approve_borrow/<int:request_id>', methods=['POST'])
 @login_required
 def approve_borrow(request_id):
+    '''
+    Handle the borrow request approval process
+    Updates the borrow request status and sends a confirmation message
+    '''
     try:
         conn = get_db_connection()
         
@@ -1061,6 +1143,10 @@ def approve_borrow(request_id):
 @app.route('/decline_borrow/<int:request_id>', methods=['POST'])
 @login_required
 def decline_borrow(request_id):
+    '''
+    Handle the borrow request decline process
+    Updates the borrow request status and sends a notification message
+    '''
     try:
         conn = get_db_connection()
         
@@ -1110,111 +1196,13 @@ def decline_borrow(request_id):
         flash('An error occurred while declining the borrow request.', 'danger')
         return redirect(url_for('my_books'))
 
-@app.route('/message_user/<int:user_id>', methods=['GET', 'POST'])
-@login_required
-def message_user(user_id):
-    if request.method == 'POST':
-        content = request.form.get('content')
-        if not content:
-            flash('Message cannot be empty.', 'danger')
-            return redirect(url_for('message_user', user_id=user_id))
-            
-        try:
-            conn = get_db_connection()
-            conn.execute('''
-                INSERT INTO Messages (sender_id, receiver_id, content, timestamp)
-                VALUES (?, ?, ?, datetime('now'))
-            ''', (session['user_id'], user_id, content))
-            conn.commit()
-            conn.close()
-            
-            flash('Message sent successfully!', 'success')
-            return redirect(url_for('view_book', book_id=request.args.get('book_id')))
-            
-        except Exception as e:
-            flash('An error occurred while sending the message.', 'danger')
-            return redirect(url_for('message_user', user_id=user_id))
-    
-    # Get user details for the message form
-    conn = get_db_connection()
-    user = conn.execute('SELECT name FROM Users WHERE user_id = ?', (user_id,)).fetchone()
-    conn.close()
-    
-    if not user:
-        flash('User not found.', 'danger')
-        return redirect(url_for('home'))
-        
-    return render_template('message_user.html', user=user, user_id=user_id)
-
-@app.route('/reserve_book/<int:book_id>', methods=['POST'])
-@login_required
-def reserve_book(book_id):
-    try:
-        conn = get_db_connection()
-        
-        # Check if book exists and is available
-        book = conn.execute('''
-            SELECT * FROM Books 
-            WHERE book_id = ? AND user_id != ?
-        ''', (book_id, session['user_id'])).fetchone()
-        
-        if not book:
-            flash('Book not found or not available for reservation.', 'danger')
-            return redirect(url_for('home'))
-            
-        # Check if book is already borrowed
-        existing_borrow = conn.execute('''
-            SELECT * FROM BorrowedBooks 
-            WHERE book_id = ? AND return_date IS NULL
-        ''', (book_id,)).fetchone()
-        
-        if existing_borrow:
-            flash('This book is currently borrowed by someone else.', 'danger')
-            return redirect(url_for('view_book', book_id=book_id))
-            
-        # Add reservation record
-        conn.execute('''
-            INSERT INTO Reservations (book_id, user_id, reservation_date, return_due_date, status)
-            VALUES (?, ?, datetime('now'), datetime('now', '+14 days'), 'pending')
-        ''', (book_id, session['user_id']))
-        
-        conn.commit()
-        conn.close()
-        
-        flash('Book reserved successfully! The owner will be notified.', 'success')
-        return redirect(url_for('my_books'))
-        
-    except Exception as e:
-        flash('An error occurred while reserving the book.', 'danger')
-        return redirect(url_for('view_book', book_id=book_id))
-
-@app.route('/view_message/<int:message_id>')
-@login_required
-def view_message(message_id):
-    conn = get_db_connection()
-    
-    # Get message details with sender/receiver information
-    message = conn.execute('''
-        SELECT m.*, 
-               sender.name as sender_name, sender.profile_image as sender_image,
-               receiver.name as receiver_name, receiver.profile_image as receiver_image
-        FROM Messages m
-        JOIN Users sender ON m.sender_id = sender.user_id
-        JOIN Users receiver ON m.receiver_id = receiver.user_id
-        WHERE m.message_id = ? AND (m.sender_id = ? OR m.receiver_id = ?)
-    ''', (message_id, session['user_id'], session['user_id'])).fetchone()
-    
-    if not message:
-        flash('Message not found or you do not have permission to view it.', 'danger')
-        conn.close()
-        return redirect(url_for('messages'))
-    
-    conn.close()
-    return render_template('view_message.html', message=message)
-
 @app.route('/return_book/<int:book_id>', methods=['POST'])
 @login_required
 def return_book(book_id):
+    '''
+    Handle the book return process
+    Updates the return date and sends a notification to the book owner
+    '''
     try:
         conn = get_db_connection()
         
