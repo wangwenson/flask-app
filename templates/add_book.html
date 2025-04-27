@@ -1,76 +1,104 @@
 {% extends "base.html" %}
 
-{% block title %}Add New Book - Campus BookShare{% endblock %}
+{% block title %}Add Book - Campus BookShare{% endblock %}
 
 {% block content %}
-<div class="container py-4 content">
+<div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Add a New Book</h3>
+                </div>
                 <div class="card-body">
-                    <h2 class="mb-4">Add New Book</h2>
-                    
-                    <form method="POST" action="{{ url_for('add_book') }}">
-                        <!-- Book Information -->
-                        <div class="mb-4">
-                            <h4>Book Information</h4>
-                            <div class="mb-3">
-                                <label for="title" class="form-label">Title</label>
-                                <input type="text" class="form-control" id="title" name="title" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="author" class="form-label">Author</label>
-                                <input type="text" class="form-control" id="author" name="author" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="isbn" class="form-label">ISBN</label>
-                                <input type="text" class="form-control" id="isbn" name="isbn" required>
-                            </div>
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('add_book') }}" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group mb-3">
+                            {{ form.title.label(class="form-label") }}
+                            {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.title.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
 
-                        <!-- Course Information -->
-                        <div class="mb-4">
-                            <h4>Course Information</h4>
-                            <div class="mb-3">
-                                <label for="course_code" class="form-label">Course Code</label>
-                                <input type="text" class="form-control" id="course_code" name="course_code" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="subject" class="form-label">Subject</label>
-                                <select class="form-select" id="subject" name="subject" required>
-                                    <option value="">Select a subject</option>
-                                    <option value="Computer Science">Computer Science</option>
-                                    <option value="Mathematics">Mathematics</option>
-                                    <option value="Physics">Physics</option>
-                                    <option value="Chemistry">Chemistry</option>
-                                    <option value="Biology">Biology</option>
-                                    <option value="Engineering">Engineering</option>
-                                    <option value="Business">Business</option>
-                                    <option value="Humanities">Humanities</option>
-                                </select>
-                            </div>
+                        <div class="form-group mb-3">
+                            {{ form.author.label(class="form-label") }}
+                            {{ form.author(class="form-control" + (" is-invalid" if form.author.errors else "")) }}
+                            {% if form.author.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.author.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
 
-                        <!-- Book Condition -->
-                        <div class="mb-4">
-                            <h4>Book Condition</h4>
-                            <div class="mb-3">
-                                <label for="condition" class="form-label">Condition</label>
-                                <select class="form-select" id="condition" name="condition" required>
-                                    <option value="">Select condition</option>
-                                    <option value="New">New</option>
-                                    <option value="Like New">Like New</option>
-                                    <option value="Very Good">Very Good</option>
-                                    <option value="Good">Good</option>
-                                    <option value="Fair">Fair</option>
-                                    <option value="Poor">Poor</option>
-                                </select>
-                            </div>
+                        <div class="form-group mb-3">
+                            {{ form.isbn.label(class="form-label") }}
+                            {{ form.isbn(class="form-control" + (" is-invalid" if form.isbn.errors else "")) }}
+                            {% if form.isbn.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.isbn.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
 
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('my_books') }}" class="btn btn-outline-primary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Add Book</button>
+                        <div class="form-group mb-3">
+                            {{ form.course_code.label(class="form-label") }}
+                            {{ form.course_code(class="form-control" + (" is-invalid" if form.course_code.errors else "")) }}
+                            {% if form.course_code.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.course_code.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-3">
+                            {{ form.subject.label(class="form-label") }}
+                            {{ form.subject(class="form-select" + (" is-invalid" if form.subject.errors else "")) }}
+                            {% if form.subject.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.subject.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-3">
+                            {{ form.condition.label(class="form-label") }}
+                            {{ form.condition(class="form-select" + (" is-invalid" if form.condition.errors else "")) }}
+                            {% if form.condition.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.condition.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
                         </div>
                     </form>
                 </div>

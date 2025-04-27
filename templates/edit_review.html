@@ -11,20 +11,31 @@
                     <h4 class="mb-0">Edit Review for {{ review.reviewee_name }}</h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+<form method="POST" action="">
                         <div class="mb-3">
                             <label for="rating" class="form-label">Rating</label>
                             <select class="form-select" id="rating" name="rating" required>
-                                <option value="1" {% if review.rating == 1 %}selected{% endif %}>1 Star</option>
-                                <option value="2" {% if review.rating == 2 %}selected{% endif %}>2 Stars</option>
-                                <option value="3" {% if review.rating == 3 %}selected{% endif %}>3 Stars</option>
-                                <option value="4" {% if review.rating == 4 %}selected{% endif %}>4 Stars</option>
-                                <option value="5" {% if review.rating == 5 %}selected{% endif %}>5 Stars</option>
-                            </select>
+    <option value="">Select a rating</option>
+    <option value="1" {% if review.rating == '1' or review.rating == 1 %}selected{% endif %}>1 Star</option>
+    <option value="2" {% if review.rating == '2' or review.rating == 2 %}selected{% endif %}>2 Stars</option>
+    <option value="3" {% if review.rating == '3' or review.rating == 3 %}selected{% endif %}>3 Stars</option>
+    <option value="4" {% if review.rating == '4' or review.rating == 4 %}selected{% endif %}>4 Stars</option>
+    <option value="5" {% if review.rating == '5' or review.rating == 5 %}selected{% endif %}>5 Stars</option>
+</select>
                         </div>
                         <div class="mb-3">
                             <label for="comment" class="form-label">Comment</label>
-                            <textarea class="form-control" id="comment" name="comment" rows="4" required>{{ review.comment }}</textarea>
+                            <textarea class="form-control" id="comment" name="comment" rows="4" required>{{ review.comment|default('') }}</textarea>
                         </div>
                         <div class="d-flex justify-content-between">
                             <button type="submit" class="btn btn-primary">Update Review</button>

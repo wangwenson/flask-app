@@ -6,6 +6,7 @@ from functools import wraps
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import time
+from forms import RegistrationForm, LoginForm, BookForm, ReviewForm, EditProfileForm, MessageForm
 
 # Load SECRET_KEY from .env file
 load_dotenv()
@@ -418,28 +419,22 @@ def edit_profile():
     Handles profile image upload
     Handles password changes
     '''
-    if request.method == 'POST':
-        name = request.form.get('name')
-        location = request.form.get('location')
-        email = request.form.get('email')
-        current_password = request.form.get('current_password')
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-        profile_image = request.files.get('profile_image')
+    form = EditProfileForm()
+    if form.validate_on_submit():
+        name = form.name.data
+        email = form.email.data
+        location = form.location.data
+        current_password = form.current_password.data
+        new_password = form.new_password.data
+        profile_image = form.profile_image.data
         
         conn = get_db_connection()
         user = conn.execute('SELECT * FROM Users WHERE user_id = ?', (session['user_id'],)).fetchone()
         
-        # Check if current password is correct
+        # Check if current password is correct when changing password
         if new_password:
             if not check_password_hash(user['password'], current_password):
                 flash('Current password is incorrect.', 'danger')
-                conn.close()
-                return redirect(url_for('edit_profile'))
-            
-            # Check if new password and confirm password match
-            if new_password != confirm_password:
-                flash('New passwords do not match.', 'danger')
                 conn.close()
                 return redirect(url_for('edit_profile'))
             
@@ -494,11 +489,17 @@ def edit_profile():
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('profile'))
 
+    # Pre-fill form with current user data
     conn = get_db_connection()
     user = conn.execute('SELECT * FROM Users WHERE user_id = ?', (session['user_id'],)).fetchone()
     conn.close()
     
-    return render_template('edit_profile.html', user=user)
+    if request.method == 'GET':
+        form.name.data = user['name']
+        form.email.data = user['email']
+        form.location.data = user['location']
+    
+    return render_template('edit_profile.html', form=form, user=user)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -506,40 +507,40 @@ def register():
     Display the register page
     Handles user registration
     '''
+    form = RegistrationForm()
     if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
-        location = request.form.get('location', '')
-
-        if password != confirm_password:
-            flash('Passwords do not match.', 'danger')
-            return redirect(url_for('register'))
-        
-        conn = get_db_connection()
-        
-        # Check if email is already registered
-        existing_user = conn.execute('SELECT * FROM Users WHERE email = ?', (email,)).fetchone()
-        if existing_user:
-            flash('Email already registered.', 'danger')
+        if form.validate_on_submit():
+            name = form.name.data
+            email = form.email.data
+            password = form.password.data
+            location = form.location.data
+            
+            conn = get_db_connection()
+            
+            # Check if email is already registered
+            existing_user = conn.execute('SELECT * FROM Users WHERE email = ?', (email,)).fetchone()
+            if existing_user:
+                flash('Email already registered.', 'danger')
+                conn.close()
+                return redirect(url_for('register'))
+            
+            hashed_password = generate_password_hash(password)
+            
+            conn.execute('''
+                INSERT INTO Users (name, email, password, location, profile_image)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (name, email, hashed_password, location, '/static/images/default.jpg'))
+            
+            conn.commit()
             conn.close()
-            return redirect(url_for('register'))
-        
-        hashed_password = generate_password_hash(password)
-        
-        conn.execute('''
-            INSERT INTO Users (name, email, password, location, profile_image)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (name, email, hashed_password, location, '/static/images/default.jpg'))
-        
-        conn.commit()
-        conn.close()
-        
-        flash('Registration successful! Please log in.', 'success')
-        return redirect(url_for('login'))
+            
+            flash('Registration successful! Please log in.', 'success')
+            return redirect(url_for('login'))
+        else:
+            # If validation fails, the form will be re-rendered with error messages
+            return render_template('register.html', form=form)
     
-    return render_template('register.html')
+    return render_template('register.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -547,10 +548,11 @@ def login():
     Display the login page
     Handles user login
     '''
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        remember = True if request.form.get('remember') else False
+    form = LoginForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+        remember = form.remember.data
         
         conn = get_db_connection()
         user = conn.execute('SELECT * FROM Users WHERE email = ?', (email,)).fetchone()
@@ -560,13 +562,13 @@ def login():
             session['user_id'] = user['user_id']
             session['name'] = user['name']
             if remember:
-                session.permanent = True # Remember user's session
+                session.permanent = True
             flash('Login successful!', 'success')
             return redirect(url_for('home'))
         else:
             flash('Invalid email or password', 'danger')
     
-    return render_template('login.html')
+    return render_template('login.html', form=form)
 
 @app.route('/logout')
 def logout():
@@ -625,29 +627,23 @@ def add_book():
     Display the add book page
     Allows user to add a new book to their listings
     '''
-    conn = get_db_connection()
-    if request.method == 'POST':
-        title = request.form.get('title')
-        author = request.form.get('author')
-        isbn = request.form.get('isbn')
-        course_code = request.form.get('course_code')
-        subject = request.form.get('subject')
-        condition = request.form.get('condition')
-        
-        # Check if all required fields are filled
-        if not all([title, author, isbn, course_code, subject, condition]):
-            flash('Please fill in all required fields', 'danger')
-            conn.close()
-            return redirect(url_for('add_book'))
+    form = BookForm()
+    if form.validate_on_submit():
+        title = form.title.data
+        author = form.author.data
+        isbn = form.isbn.data
+        course_code = form.course_code.data
+        subject = form.subject.data
+        condition = form.condition.data
         
         try:
-            # Insert the new book into the database
+            conn = get_db_connection()
             conn.execute('''
                 INSERT INTO Books (user_id, title, author, isbn, course_code, subject, condition, availability, date_posted)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             ''', (session['user_id'], title, author, isbn, course_code, subject, condition, 'available'))
             conn.commit()
-            flash('Book updated successfully!', 'success')
+            flash('Book added successfully!', 'success')
             conn.close()
             return redirect(url_for('my_books'))
         
@@ -655,7 +651,7 @@ def add_book():
             flash('An error occurred while adding the book. Please try again.', 'danger')
             return redirect(url_for('add_book'))
     
-    return render_template('add_book.html')
+    return render_template('add_book.html', form=form)
 
 @app.route('/edit_book/<int:book_id>', methods=['GET', 'POST'])
 @login_required
@@ -825,13 +821,10 @@ def add_review(user_id):
     Display the add review page
     Allows user to add a new review for another user
     '''
-    if request.method == 'POST':
-        rating = request.form.get('rating')
-        comment = request.form.get('comment')
-        
-        if not all([rating, comment]):
-            flash('Please fill in all fields.', 'danger')
-            return redirect(url_for('add_review', user_id=user_id))
+    form = ReviewForm()
+    if form.validate_on_submit():
+        rating = form.rating.data
+        comment = form.comment.data
         
         try:
             # Insert the new review into the database
@@ -855,7 +848,7 @@ def add_review(user_id):
         (user_id,)
     ).fetchone()
     
-    return render_template('add_review.html', user=user)
+    return render_template('add_review.html', form=form, user=user)
 
 @app.route('/my_reviews')
 @login_required

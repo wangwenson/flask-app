@@ -10,25 +10,46 @@
                 <div class="card-body">
                     <h2 class="mb-4">Add Review for {{ user.name }}</h2>
                     
-                    <form method="POST" action="{{ url_for('add_review', user_id=user.user_id) }}">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" action="{{ url_for('add_review', user_id=user.user_id) }}" novalidate>
+                        {{ form.hidden_tag() }}
+                        
                         <div class="mb-3">
-                            <label for="rating" class="form-label">Rating</label>
-                            <select class="form-select" id="rating" name="rating" required>
-                                <option value="5">5 ★ - Excellent</option>
-                                <option value="4">4 ★ - Very Good</option>
-                                <option value="3">3 ★ - Good</option>
-                                <option value="2">2 ★ - Fair</option>
-                                <option value="1">1 ★ - Poor</option>
-                            </select>
+                            {{ form.rating.label(class="form-label") }}
+                            {{ form.rating(class="form-select" + (" is-invalid" if form.rating.errors else "")) }}
+                            {% if form.rating.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.rating.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                         
                         <div class="mb-3">
-                            <label for="comment" class="form-label">Review Comment</label>
-                            <textarea class="form-control" id="comment" name="comment" rows="4" required></textarea>
+                            {{ form.comment.label(class="form-label") }}
+                            {{ form.comment(class="form-control" + (" is-invalid" if form.comment.errors else ""), rows=4) }}
+                            {% if form.comment.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.comment.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                         
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Submit Review</button>
+                            {{ form.submit(class="btn btn-primary") }}
                             <a href="{{ url_for('view_profile', user_id=user.user_id) }}" class="btn btn-outline-secondary">Cancel</a>
                         </div>
                     </form>

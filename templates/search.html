@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Search Books - Campus BookShare{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Search Books</h3>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="GET" action="{{ url_for('search') }}" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="form-group mb-3">
+                            {{ form.query.label(class="form-label") }}
+                            {{ form.query(class="form-control" + (" is-invalid" if form.query.errors else ""), placeholder="Search by title, author, ISBN, or course code") }}
+                            {% if form.query.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.query.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-3">
+                            {{ form.subject.label(class="form-label") }}
+                            {{ form.subject(class="form-control" + (" is-invalid" if form.subject.errors else "")) }}
+                            {% if form.subject.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.subject.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-3">
+                            {{ form.condition.label(class="form-label") }}
+                            {{ form.condition(class="form-control" + (" is-invalid" if form.condition.errors else "")) }}
+                            {% if form.condition.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.condition.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+
+                    {% if books %}
+                        <hr>
+                        <h4 class="mb-3">Search Results</h4>
+                        <div class="row">
+                            {% for book in books %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ book.title }}</h5>
+                                            <h6 class="card-subtitle mb-2 text-muted">by {{ book.author }}</h6>
+                                            <p class="card-text">
+                                                <strong>ISBN:</strong> {{ book.isbn }}<br>
+                                                <strong>Course Code:</strong> {{ book.course_code }}<br>
+                                                <strong>Subject:</strong> {{ book.subject }}<br>
+                                                <strong>Condition:</strong> {{ book.condition }}<br>
+                                                <strong>Price:</strong> ${{ "%.2f"|format(book.price) }}
+                                            </p>
+                                            <a href="{{ url_for('book_details', book_id=book.id) }}" class="btn btn-primary">View Details</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% elif request.args.get('query') %}
+                        <hr>
+                        <div class="alert alert-info">
+                            No books found matching your search criteria.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
