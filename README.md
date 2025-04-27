@@ -14,10 +14,15 @@ Campus BookShare is a web application for university students to share, borrow, 
 
 ### Installation
 
-1. Clone the repository:
-2. Create and activate a virtual environment:
-3. Install dependencies:
+1. Clone the repository
+```bash
+git clone https://github.com/wangwenson/flask-app
+```
+3. Create and activate a virtual environment:
+4. Install dependencies:
+```bash
    pip install -r requirements.txt
+```
 
 ### Environment Variables
 
